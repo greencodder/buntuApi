@@ -1,0 +1,59 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  password      String
+  name          String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  wallet        Wallet?
+  sentTxns      Transaction[]  @relation("SenderTransactions")
+  receivedTxns  Transaction[]  @relation("ReceiverTransactions")
+}
+
+model Wallet {
+  id            String         @id @default(uuid())
+  userId        String         @unique
+  balance       Float          @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Transaction {
+  id            String         @id @default(uuid())
+  senderId      String
+  receiverId    String?
+  amount        Float
+  type          TransactionType
+  status        TransactionStatus @default(PENDING)
+  reference     String         @unique
+  description   String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  sender        User           @relation("SenderTransactions", fields: [senderId], references: [id])
+  receiver      User?          @relation("ReceiverTransactions", fields: [receiverId], references: [id])
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  TRANSFER
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+} 
