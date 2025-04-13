@@ -41,7 +41,7 @@ module.exports = (io) => {
   });
 
   io.on('connection', (socket) => {
-    console.log('Authenticated client connected', socket.id, socket.user.email);
+    console.log('Authenticated client connected', socket.id, socket.user.phone);
     
     // Automatically join user to their room based on authenticated user ID
     const userId = socket.user.id;

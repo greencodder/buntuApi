@@ -7,15 +7,21 @@ const prisma = new PrismaClient();
 // Register a new user
 exports.register = async (req, res) => {
   try {
-    const { email, password, name } = req.body;
+    const { phone, password, name, email } = req.body;
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { phone }
     });
 
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: 'User with this phone number already exists' });
+    }
+
+    // Validate phone number
+    const phoneRegex = /^\+?[1-9]\d{9,14}$/;
+    if (!phoneRegex.test(phone)) {
+      return res.status(400).json({ message: 'Invalid phone number format' });
     }
 
     // Hash password
@@ -27,9 +33,10 @@ exports.register = async (req, res) => {
       // Create user
       const newUser = await prisma.user.create({
         data: {
-          email,
+          phone,
           password: hashedPassword,
           name,
+          email
         }
       });
 
@@ -46,7 +53,7 @@ exports.register = async (req, res) => {
 
     // Generate JWT
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, phone: user.phone },
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
@@ -67,11 +74,11 @@ exports.register = async (req, res) => {
 // Login user
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { phone, password } = req.body;
 
     // Check if user exists
     const user = await prisma.user.findUnique({
-      where: { email }
+      where: { phone }
     });
 
     if (!user) {
@@ -86,7 +93,7 @@ exports.login = async (req, res) => {
 
     // Generate JWT
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, phone: user.phone },
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );

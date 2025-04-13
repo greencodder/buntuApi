@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 // Transfer funds to another user
 exports.transferFunds = async (req, res) => {
   try {
-    const { receiverEmail, amount, description } = req.body;
+    const { receiverPhone, amount, description } = req.body;
     const senderId = req.user.id;
     
     // Validate amount
@@ -29,9 +29,9 @@ exports.transferFunds = async (req, res) => {
       return res.status(400).json({ message: 'Insufficient funds' });
     }
 
-    // Find receiver by email
+    // Find receiver by phone
     const receiver = await prisma.user.findUnique({
-      where: { email: receiverEmail }
+      where: { phone: receiverPhone }
     });
 
     if (!receiver) {
@@ -83,10 +83,10 @@ exports.transferFunds = async (req, res) => {
         data: { status: 'COMPLETED' },
         include: {
           sender: {
-            select: { name: true, email: true }
+            select: { name: true, phone: true }
           },
           receiver: {
-            select: { name: true, email: true }
+            select: { name: true, phone: true }
           }
         }
       });
@@ -141,14 +141,14 @@ exports.getTransactionHistory = async (req, res) => {
           select: {
             id: true,
             name: true,
-            email: true
+            phone: true
           }
         },
         receiver: {
           select: {
             id: true,
             name: true,
-            email: true
+            phone: true
           }
         }
       },

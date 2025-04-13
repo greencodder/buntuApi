@@ -4,7 +4,7 @@ A simple payment system backend application with user authentication, wallet man
 
 ## Features
 
-- User authentication (register/login)
+- User authentication (register/login using phone number)
 - Wallet management 
 - Fund transfers between users
 - Transaction history
@@ -55,8 +55,8 @@ npm run dev
 ## API Endpoints
 
 ### Authentication
-- POST `/api/auth/register` - Register a new user
-- POST `/api/auth/login` - Login to existing account
+- POST `/api/auth/register` - Register a new user with phone number
+- POST `/api/auth/login` - Login with phone number
 
 ### User
 - GET `/api/user/profile` - Get current user profile info
@@ -66,7 +66,7 @@ npm run dev
 - POST `/api/wallet/fund` - Fund your wallet
 
 ### Transactions
-- POST `/api/transactions/transfer` - Transfer funds to another user
+- POST `/api/transactions/transfer` - Transfer funds to another user (using receiver's phone)
 - GET `/api/transactions/history` - Get transaction history
 
 ## Socket.io Integration
@@ -170,10 +170,10 @@ socket.on('wallet:funded', (data) => {
 });
 
 // Emit events
-function initiateTransfer(receiverEmail, amount) {
+function initiateTransfer(receiverPhone, amount) {
   socket.emit('transaction:initiated', {
     senderId: currentUserId,
-    receiverEmail,
+    receiverPhone,
     amount
   });
 }

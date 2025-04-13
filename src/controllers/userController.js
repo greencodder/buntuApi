@@ -8,6 +8,7 @@ exports.getProfile = async (req, res) => {
       where: { id: req.user.id },
       select: {
         id: true,
+        phone: true,
         email: true,
         name: true,
         createdAt: true,
