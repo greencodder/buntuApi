@@ -9,6 +9,52 @@ exports.generateReference = () => {
 };
 
 /**
+ * Generates a random OTP code
+ * @param {number} length - Length of the OTP code (default: 6)
+ * @returns {string} OTP code
+ */
+exports.generateOTP = (length = 6) => {
+  return Math.floor(Math.random() * Math.pow(10, length))
+    .toString()
+    .padStart(length, '0');
+};
+
+/**
+ * Send OTP via SendChamp SMS service
+ * @param {string} phone - Phone number to send OTP to
+ * @param {string} code - OTP code
+ * @returns {Promise<boolean>} Success status
+ */
+exports.sendOTP = async (phone, code) => {
+  try {
+    const sendchamp = require('../config/sendchamp');
+    
+    // Remove the leading '+' if present in the phone number
+    const formattedPhone = phone.startsWith('+') ? phone.substring(1) : phone;
+    
+    // Send OTP message via SendChamp
+    const response = await sendchamp.sms.send({
+      to: [formattedPhone],
+      message: `Your verification code is: ${code}. Valid for 10 minutes.`,
+      sender_name: 'BuntuPay', // Your SendChamp registered sender ID
+      route: 'dnd' // Use 'dnd' for messages that should bypass DND
+    });
+    
+    console.log('SendChamp SMS sent:', response.data ? 'success' : 'failed');
+    
+    return response.data && response.data.status === 'success';
+  } catch (error) {
+    console.error('SendChamp SMS error:', error.message || error);
+    
+    // Fallback to console log in case of API failure
+    console.log(`[SMS FALLBACK] OTP ${code} for ${phone} - Service unavailable`);
+    
+    // Return true to not block the flow in development/when API fails
+    return process.env.NODE_ENV !== 'production';
+  }
+};
+
+/**
  * Formats currency amount
  * @param {number} amount - The amount to format
  * @returns {string} Formatted amount

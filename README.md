@@ -1,10 +1,13 @@
-# Payment System API
+# BuntuPay API
 
-A simple payment system backend application with user authentication, wallet management, and transaction capabilities.
+A secure payment system backend application with advanced authentication, wallet management, and transaction capabilities.
 
 ## Features
 
-- User authentication (register/login using phone number)
+- Enhanced user authentication
+  - Phone number verification with OTP
+  - Secure device management (one active device per user)
+  - SendChamp SMS integration for OTP delivery
 - Wallet management 
 - Fund transfers between users
 - Transaction history
@@ -16,6 +19,7 @@ A simple payment system backend application with user authentication, wallet man
 - Prisma ORM with MySQL
 - Socket.io for real-time communication
 - JWT for authentication
+- SendChamp for SMS delivery
 
 ## Getting Started
 
@@ -35,11 +39,15 @@ npm install
 
 3. Configure environment variables
    - Copy the `.env.example` to `.env` (if available) 
-   - Update the database connection string:
+   - Update the database connection string and other configuration:
    ```
    DATABASE_URL="mysql://username:password@localhost:3306/payment_system"
    JWT_SECRET="your-super-secret-jwt-key"
    PORT=3000
+   
+   # SendChamp API configuration
+   SENDCHAMP_PUBLIC_KEY="your-sendchamp-public-key"
+   NODE_ENV="development" # Use 'production' for live mode
    ```
 
 4. Run database migrations
@@ -55,6 +63,8 @@ npm run dev
 ## API Endpoints
 
 ### Authentication
+- POST `/api/auth/check-phone` - Check if phone exists and handle device verification
+- POST `/api/auth/verify-otp` - Verify OTP code for registration or device verification
 - POST `/api/auth/register` - Register a new user with phone number
 - POST `/api/auth/login` - Login with phone number
 
@@ -178,6 +188,58 @@ function initiateTransfer(receiverPhone, amount) {
   });
 }
 ```
+
+## OTP Verification & Device Management
+
+BuntuPay implements a secure authentication system with phone verification and device management:
+
+### Phone Verification Flow
+
+The application uses a two-step verification process for new device logins:
+
+1. **Check Phone Endpoint** (`POST /api/auth/check-phone`)
+   - **Request Body**:
+     ```json
+     {
+       "phone": "+1234567890",
+       "deviceId": "unique-device-identifier"
+     }
+     ```
+   - **Response Scenarios**:
+     - User doesn't exist: Returns status 203, sends OTP for registration
+     - User exists with matching active device: Returns status 200, allows login
+     - User exists with inactive device: Returns status 202, sends OTP for verification
+     - User exists with different active device: Returns status 202, sends OTP for verification
+
+2. **Verify OTP Endpoint** (`POST /api/auth/verify-otp`)
+   - **Request Body**:
+     ```json
+     {
+       "phone": "+1234567890",
+       "code": "123456",
+       "deviceId": "unique-device-identifier",
+       "purpose": "DEVICE_VERIFICATION" // or "REGISTRATION"
+     }
+     ```
+   - **Response**: Authenticates user and manages device status
+
+### One Device Policy
+
+BuntuPay enforces a "one active device per user" security policy:
+
+- Only one device can be active for a user at any time
+- When a new device is verified, any previously active device is automatically deactivated
+- Inactive devices require OTP verification to reactivate
+- This prevents unauthorized access from multiple devices
+
+### SMS Integration
+
+The system uses SendChamp for delivering OTP messages:
+
+- Registration verification messages
+- Device verification messages
+- Context-aware messages explaining the verification reason
+- Fallback to console logging in development mode
 
 ## License
 
